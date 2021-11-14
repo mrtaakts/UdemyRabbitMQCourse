@@ -18,7 +18,7 @@ namespace UdemyRabbitMQ.publisher
 
             channel.QueueDeclare("hello-queue", true, false, false);
 
-            Enumerable.Range(1, 50).ToList().ForEach(x =>
+            Enumerable.Range(1, 5000).ToList().ForEach(x =>
             {
                 string message = $"Message {x}";
                 var messageBody = Encoding.UTF8.GetBytes(message);
