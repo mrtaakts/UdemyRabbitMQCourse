@@ -1,9 +1,11 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 
 namespace UdemyRabbitMQ.subscriber
@@ -29,7 +31,7 @@ namespace UdemyRabbitMQ.subscriber
 
             headers.Add("format", "pdf");
             headers.Add("shape", "a4");
-            headers.Add("x-match","all");
+            headers.Add("x-match","any");
 
             channel.QueueBind(queueName, "header-exchange", string.Empty,headers);
 
@@ -40,9 +42,9 @@ namespace UdemyRabbitMQ.subscriber
             consumer.Received += (object sender, BasicDeliverEventArgs e) =>
             {
                 var message = Encoding.UTF8.GetString(e.Body.ToArray());
-
+                Product product = JsonSerializer.Deserialize<Product>(message);
                 Thread.Sleep(1500);
-                Console.WriteLine("Gelen Mesaj:" + message);
+                Console.WriteLine($"Gelen Mesaj: {product.Id }- {product.Name}- {product.Price}- {product.Stock}");
 
 
                 channel.BasicAck(e.DeliveryTag, false);
