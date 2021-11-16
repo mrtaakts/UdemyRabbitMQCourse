@@ -1,5 +1,6 @@
 ﻿using RabbitMQ.Client;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -23,34 +24,20 @@ namespace UdemyRabbitMQ.publisher
 
             var channel = connection.CreateModel();
 
-            channel.ExchangeDeclare("logs-direct", durable: true, type: ExchangeType.Direct);
+            channel.ExchangeDeclare("header-exchange", durable: true, type: ExchangeType.Headers);
 
-            Enum.GetNames(typeof(LogNames)).ToList().ForEach(x =>
-            {
-                var routeKey = $"route-{x}";
-                var queueName = $"direct-queue-{x}";
-                channel.QueueDeclare(queueName, true, false, false);
-                channel.QueueBind(queueName, "logs-direct", routeKey);
-            });
+            Dictionary<string, object> headers = new Dictionary<string, object>();
 
-            Enumerable.Range(1, 50).ToList().ForEach(x =>
-            {
-                LogNames log = (LogNames)new Random().Next(1, 5);
+            headers.Add("format", "pdf");
+            headers.Add("shape", "a4");
 
-                string message = $"log-type {log}";
+            var properties = channel.CreateBasicProperties();
+            properties.Headers = headers;
 
-                var messageBody = Encoding.UTF8.GetBytes(message);
-
-                var routeKey = $"route-{log}";
-
-                channel.BasicPublish("logs-direct", routeKey, null, messageBody);
-
-                Console.WriteLine($"Log gönderilmiştir : {message}");
-
-            });
+            channel.BasicPublish("header-exchange", string.Empty, properties,Encoding.UTF8.GetBytes("header mesajım"));
 
 
-
+            Console.WriteLine("mesaj gönderilmiştir");
 
 
             Console.ReadLine();
