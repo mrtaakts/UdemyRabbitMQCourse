@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RabbitMQ.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using UdemyRabbitMQWeb.Watermark.BackgroundServices;
 using UdemyRabbitMQWeb.Watermark.Models;
+using UdemyRabbitMQWeb.Watermark.Services;
 
 namespace UdemyRabbitMQWeb.Watermark
 {
@@ -25,11 +28,19 @@ namespace UdemyRabbitMQWeb.Watermark
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+
+            services.AddSingleton(sp => new ConnectionFactory() { HostName = Configuration.GetConnectionString("RabbitMQ"), DispatchConsumersAsync = true });
+            services.AddSingleton<RabbitMQClientService>();
+            services.AddSingleton<RabbitMQPublisher>();
+
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseInMemoryDatabase(databaseName: "productDb");
             });
+
+            services.AddHostedService<ImageWatermarkProcessBackgroundService>();
+
+            services.AddControllersWithViews();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
