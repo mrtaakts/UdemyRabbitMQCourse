@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UdemyRabbitMQWeb.ExcelCreate.Models;
+using UdemyRabbitMQWeb.ExcelCreate.Services;
 
 namespace UdemyRabbitMQWeb.ExcelCreate.Controllers
 {
@@ -15,11 +16,13 @@ namespace UdemyRabbitMQWeb.ExcelCreate.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly AppDbContext _context;
+        private readonly RabbitMQPublisher _rabbitMQPublisher;
 
-        public ProductController(UserManager<IdentityUser> userManager, AppDbContext context)
+        public ProductController(UserManager<IdentityUser> userManager, AppDbContext context, RabbitMQPublisher rabbitMQPublisher)
         {
             _userManager = userManager;
             _context = context;
+            _rabbitMQPublisher = rabbitMQPublisher;
         }
 
         public IActionResult Index()
@@ -41,6 +44,7 @@ namespace UdemyRabbitMQWeb.ExcelCreate.Controllers
 
             await _context.UserFiles.AddAsync(userFile);
             await _context.SaveChangesAsync();
+            _rabbitMQPublisher.Publish(new Shared.CreateExcelMessage { FileId = userFile.Id});
             // rabbitMQ'ya mesaj gönder
 
             TempData["StartCreatingExcel"] = true;
@@ -51,9 +55,7 @@ namespace UdemyRabbitMQWeb.ExcelCreate.Controllers
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
 
-
-
-            return View(await _context.UserFiles.Where(x=> x.UserId==user.Id).ToListAsync());
+            return View(await _context.UserFiles.Where(x=> x.UserId==user.Id).OrderByDescending(x=> x.Id).ToListAsync());
         }
     }
 }

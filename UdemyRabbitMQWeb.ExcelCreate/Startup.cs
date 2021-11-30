@@ -6,11 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RabbitMQ.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using UdemyRabbitMQWeb.ExcelCreate.Hubs;
 using UdemyRabbitMQWeb.ExcelCreate.Models;
+using UdemyRabbitMQWeb.ExcelCreate.Services;
 
 namespace UdemyRabbitMQWeb.ExcelCreate
 {
@@ -26,6 +29,9 @@ namespace UdemyRabbitMQWeb.ExcelCreate
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton(sp => new ConnectionFactory() { HostName = Configuration.GetConnectionString("RabbitMQ"), DispatchConsumersAsync = true });
+            services.AddSingleton<RabbitMQClientService>();
+            services.AddSingleton<RabbitMQPublisher>();
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("SqlServer"));
@@ -37,6 +43,7 @@ namespace UdemyRabbitMQWeb.ExcelCreate
 
              }).AddEntityFrameworkStores<AppDbContext>();
             services.AddControllersWithViews();
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,6 +68,7 @@ namespace UdemyRabbitMQWeb.ExcelCreate
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHub<MyHub>("/MyHub"); 
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");

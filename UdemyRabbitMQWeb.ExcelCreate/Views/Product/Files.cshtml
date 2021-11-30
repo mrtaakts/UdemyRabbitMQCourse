@@ -3,6 +3,32 @@
     ViewData["Title"] = "Files";
 }
 @model List<UserFile>
+<h1>Files</h1>
+@section Scripts
+{
+    <script>
+
+        $(document).ready(function () {
+
+            var hasStartCreatingExcel = '@TempData["StartCreatingExcel"]';
+
+            if (hasStartCreatingExcel)
+            {
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Excel Oluşturma İşlemi Başladı. Bittiğinde bildiri alacaksınız.',
+                    showConfirmButton: false,
+                    timer:2500
+                })
+            }
+
+
+        });
+
+
+    </script>
+}
 <table class="table table-striped">
     <thead>
         <tr>
@@ -26,5 +52,4 @@
         </tr>
     }
 </table>
-<h1>Files</h1>
 
